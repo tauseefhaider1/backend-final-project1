@@ -11,7 +11,7 @@ import {
 } from "../validations/authValidation.js";
 
 import { generateOtp } from "../utils/generateotp.js";
-import  sendOtpEmail  from "../utils/sendOtpEmail.js";
+import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import { sessionManager } from "../utils/sessionManager.js"; // Single import
 import userProfile from "../models/userProfile.js";
 
