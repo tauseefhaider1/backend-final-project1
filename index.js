@@ -51,6 +51,8 @@ app.use(
       "http://localhost:5174",
       "http://localhost:3000",
       "https://clientfinalproject.vercel.app",  // ✅ add this
+      "https://adminfrontend-six.vercel.app",
+
     ],
     credentials: true,
   })
