@@ -98,7 +98,7 @@ app.use((err, req, res, next) => {
 
 /* ================= DATABASE ================= */
 const mongoUrl = process.env.MONGO_URL;
-const port = process.env.PORT || 4534;
+const port = process.env.PORT || 8080;
 
 if (!mongoUrl) {
   console.error("❌ MONGO_URL is missing in .env");
