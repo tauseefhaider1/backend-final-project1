@@ -81,7 +81,7 @@ app.get("/", (req, res) => {
 
 /* ================= ROUTES ================= */
 app.use("/api/auth", authRoutes);
-app.use("/product", productRoutes);      // products
+app.use("/api/product", productRoutes);      // products
 app.use("/api", sliderroute);             // categories / sliders
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
