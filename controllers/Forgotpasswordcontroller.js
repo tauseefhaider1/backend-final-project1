@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import User from "../models/usersmodels.js";
-import { generateOtp } from "../utils/generateOtp.js";
-import { sendOtpEmail } from "../utils/sendOtpEmail.js";
+import  generateOtp  from "../utils/generateotp.js"
+import sendOtpEmail from "../utils/sendOtpEmail.js"
 
 export const forgotPassword = async (req, res) => {
   try {
