@@ -7,7 +7,9 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
+import sendOtpEmail from "./utils/sendOtpEmail.js";
 
 // Routes
 import cartRoutes from "./routers/CartRoutes.js";
