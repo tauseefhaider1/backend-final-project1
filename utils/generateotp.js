@@ -1,7 +1,7 @@
 // utils/generateOtp.js
 import crypto from "crypto";
 
-export const generateOtp = () => {
+const generateOtp = () => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   const otpHash = crypto
@@ -13,3 +13,4 @@ export const generateOtp = () => {
 
   return { otp, otpHash, otpExpires };
 };
+export default generateOtp;
