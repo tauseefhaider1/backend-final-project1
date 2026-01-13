@@ -55,12 +55,10 @@ app.use(
   })
 );
 
-/* ================= STATIC FILES (🔥 IMPORTANT) ================= */
-// ✅ SINGLE static middleware (duplicate removed)
-// ✅ Correct - includes "public" directory
+/* ================= STATIC FILES ================= */
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// Add debug logging
+// Debug logging for static files
 app.use("/uploads", (req, res, next) => {
   const requestedPath = path.join(process.cwd(), "uploads", req.path);
   console.log(`📁 Static file request: ${req.path}`);
@@ -68,10 +66,16 @@ app.use("/uploads", (req, res, next) => {
   console.log(`📁 Exists: ${fs.existsSync(requestedPath)}`);
   next();
 });
+
 /* ================= REQUEST LOGGING ================= */
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
+});
+
+/* ================= ROOT ROUTE ================= */
+app.get("/", (req, res) => {
+  res.send("🚀 Backend is running!");
 });
 
 /* ================= ROUTES ================= */
