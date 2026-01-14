@@ -1,6 +1,6 @@
 import express from "express";
 import Order from "../models/orderModel.js";
-import Product from "../models/product.js";
+import Product from "../models/Product.js";
 import User from "../models/usersmodels.js";
 import adminKeyMiddleware from "../middleware/adminmiddleware.js";
 
