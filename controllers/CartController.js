@@ -38,12 +38,24 @@ export const getCart = async (req, res) => {
 };
 
 // ADD TO CART
+
+
+
+// CartController.js - Add these logs
 export const addToCart = async (req, res) => {
   try {
+    console.log('=== ADD TO CART REQUEST ===');
+    console.log('Headers:', req.headers);
+    console.log('Authorization:', req.headers.authorization);
+    console.log('User from auth middleware:', req.user);
+    console.log('User ID:', req.user?.id);
+    console.log('Request body:', req.body);
+    
     const { productId, quantity = 1 } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
+      console.log('NO USER ID FOUND - Auth middleware might have failed');
       return res.status(401).json({
         success: false,
         message: "User not authenticated",
@@ -112,3 +124,6 @@ export const addToCart = async (req, res) => {
     });
   }
 };
+
+
+
