@@ -7,7 +7,6 @@ import {
   logout,
   resetPassword,
   resendOtp,
-  checkAuth,
   changePassword,
   getMySessions,
   getActiveSessions,
@@ -44,8 +43,6 @@ router.post("/resend-otp", otpLimiter, resendOtp);
 router.post("/forgot-password", otpLimiter, forgotPassword);
 router.post("/reset-password", otpLimiter, resetPassword);
 
-// Check Authentication Status
-router.get("/check", checkAuth);
 
 // Token Refresh
 router.post("/refresh-token", refreshToken);
@@ -230,7 +227,7 @@ router.put("/admin/user/:userId/status", adminMiddleware, async (req, res) => {
   }
 });
 
-// ================= HEALTH CHECK =================
+// ================= HEALTH  =================
 router.get("/health", (req, res) => {
   res.json({
     success: true,
