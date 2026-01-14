@@ -1,6 +1,30 @@
 import Cart from "../models/cartModel.js";
-import Product from "../models/productModel.js";
+import Product from "../models/product.js";
+export const getCart = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
+
+    if (!cart) {
+      return res.status(200).json({
+        success: true,
+        items: [],
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      cart,
+    });
+  } catch (error) {
+    console.error("Get cart error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch cart",
+    });
+  }
+};
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
