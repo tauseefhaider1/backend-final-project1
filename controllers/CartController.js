@@ -42,88 +42,38 @@ export const getCart = async (req, res) => {
 
 
 // CartController.js - Add these logs
-export const addToCart = async (req, res) => {
+ export const addToCart = async (req, res) => {
   try {
-    console.log('=== ADD TO CART REQUEST ===');
-    console.log('Headers:', req.headers);
-    console.log('Authorization:', req.headers.authorization);
-    console.log('User from auth middleware:', req.user);
-    console.log('User ID:', req.user?.id);
+    console.log('=== ADD TO CART DEBUG ===');
+    console.log('Authorization Header:', req.headers.authorization);
+    console.log('Cookies:', req.headers.cookie);
+    console.log('Session:', req.session);
+    console.log('User object from middleware:', req.user);
+    console.log('User ID:', req.user?.id, req.user?._id);
     console.log('Request body:', req.body);
     
-    const { productId, quantity = 1 } = req.body;
-    const userId = req.user?.id;
-
+    // Check multiple possible user ID locations
+    const userId = req.user?.id || req.user?._id || req.session?.userId;
+    
     if (!userId) {
-      console.log('NO USER ID FOUND - Auth middleware might have failed');
+      console.log('ERROR: No user ID found anywhere!');
+      console.log('Available properties on req.user:', Object.keys(req.user || {}));
       return res.status(401).json({
         success: false,
-        message: "User not authenticated",
+        message: "User not authenticated - no ID found",
       });
     }
-
-    if (!productId) {
-      return res.status(400).json({
-        success: false,
-        message: "Product ID required",
-      });
-    }
-
-    // ✅ Fetch product to ensure it exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    // ✅ Get or create user's cart
-    let cart = await Cart.findOne({ user: userId });
-
-    const itemData = {
-      product: product._id,
-      name: product.name,
-      image: product.image || "",
-      price: product.price,
-      quantity,
-    };
-
-    if (!cart) {
-      cart = new Cart({
-        user: userId,
-        items: [itemData],
-      });
-    } else {
-      // Check if product already exists in cart
-      const itemIndex = cart.items.findIndex(
-        (item) => item.product.toString() === productId
-      );
-
-      if (itemIndex > -1) {
-        // Increment quantity
-        cart.items[itemIndex].quantity += quantity;
-      } else {
-        // Add new item
-        cart.items.push(itemData);
-      }
-    }
-
-    await cart.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Item added to cart",
-      cart,
-    });
+    
+    console.log('Using userId:', userId);
+    
+    // ... rest of your code
   } catch (error) {
     console.error("Add to cart error:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to add item to cart",
+      error: error.message // Include for debugging
     });
   }
-};
-
-
-
+}
