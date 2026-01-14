@@ -167,13 +167,14 @@ export const login = async (req, res) => {
     // Add session to manager
     sessionManager.addSession(user._id.toString(), token, req);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
-      path: "/",
-    });
+  res.cookie("token", token, {
+  httpOnly: true,
+  secure: true,           // ✅ REQUIRED
+  sameSite: "none",       // ✅ REQUIRED
+  maxAge: 24 * 60 * 60 * 1000,
+  path: "/",
+});
+
 
     return res.status(200).json({
       success: true,
@@ -214,13 +215,13 @@ export const logout = (req, res) => {
       }
     }
 
-    // Always clear cookie
-    res.clearCookie("token", {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
+   res.clearCookie("token", {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+});
+
 
     return res.status(200).json({
       success: true,
@@ -333,14 +334,14 @@ export const resetPassword = async (req, res) => {
 
     // Create new session
     sessionManager.addSession(user._id.toString(), token, req);
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  maxAge: 24 * 60 * 60 * 1000,
+  path: "/",
+});
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
-      path: "/",
-    });
 
     return res.status(200).json({
       success: true,
@@ -420,66 +421,66 @@ export const resendOtp = async (req, res) => {
   }
 };
 
-/* ================= CHECK AUTH STATUS ================= */
-export const checkAuth = async (req, res) => {
-  try {
-    const token = req.cookies?.token;
+// /* ================= CHECK AUTH STATUS ================= */
+// export const checkAuth = async (req, res) => {
+//   try {
+//     const token = req.cookies?.token;
     
-    if (!token) {
-      return res.status(200).json({ 
-        success: false,
-        authenticated: false,
-        message: "No active session" 
-      });
-    }
+//     if (!token) {
+//       return res.status(200).json({ 
+//         success: false,
+//         authenticated: false,
+//         message: "No active session" 
+//       });
+//     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Check session in session manager
-    if (!sessionManager.isValidSession(decoded.userId)) {
-      res.clearCookie("token");
-      return res.status(200).json({ 
-        success: false,
-        authenticated: false,
-        message: "Session expired" 
-      });
-    }
+//     // Check session in session manager
+//     if (!sessionManager.isValidSession(decoded.userId)) {
+//       res.clearCookie("token");
+//       return res.status(200).json({ 
+//         success: false,
+//         authenticated: false,
+//         message: "Session expired" 
+//       });
+//     }
 
-    const user = await User.findById(decoded.userId).select("-password -__v");
+//     const user = await User.findById(decoded.userId).select("-password -__v");
 
-    if (!user) {
-      sessionManager.removeSession(decoded.userId);
-      res.clearCookie("token");
-      return res.status(200).json({ 
-        success: false,
-        authenticated: false,
-        message: "User not found" 
-      });
-    }
-    const profile = await userProfile.findOne({ user: user._id });
+//     if (!user) {
+//       sessionManager.removeSession(decoded.userId);
+//       res.clearCookie("token");
+//       return res.status(200).json({ 
+//         success: false,
+//         authenticated: false,
+//         message: "User not found" 
+//       });
+//     }
+//     const profile = await userProfile.findOne({ user: user._id });
 
-    return res.status(200).json({
-      success: true,
-      authenticated: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        avatar: profile?.avatar || null // <-- include avatar
-      },
-    });
-  } catch (error) {
-    // Clear invalid token
-    res.clearCookie("token");
-    return res.status(200).json({ 
-      success: false,
-      authenticated: false,
-      message: "Invalid session" 
-    });
-  }
-};
+//     return res.status(200).json({
+//       success: true,
+//       authenticated: true,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//         isVerified: user.isVerified,
+//         avatar: profile?.avatar || null // <-- include avatar
+//       },
+//     });
+//   } catch (error) {
+//     // Clear invalid token
+//     res.clearCookie("token");
+//     return res.status(200).json({ 
+//       success: false,
+//       authenticated: false,
+//       message: "Invalid session" 
+//     });
+//   }
+// };
 
 /* ================= CHANGE PASSWORD ================= */
 export const changePassword = async (req, res) => {

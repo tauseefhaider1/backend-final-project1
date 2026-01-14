@@ -90,9 +90,9 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 
 /* ================= PERSIST LOGIN ================= */
-app.get("/api/auth/me", authMiddleware, (req, res) => {
-  res.json({ success: true, user: req.user });
-});
+// app.get("/api/auth/me", authMiddleware, (req, res) => {
+//   res.json({ success: true, user: req.user });
+// });
 
 /* ================= GLOBAL ERROR HANDLER ================= */
 app.use((err, req, res, next) => {
