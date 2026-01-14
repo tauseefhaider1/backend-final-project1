@@ -1,6 +1,8 @@
+// controllers/CartController.js
 import Cart from "../models/cartModel.js";
-import Product from "../models/Product.js"; // ⚠️ case-sensitive
+import Product from "../models/Product.js"; // ✅ case-sensitive
 
+// GET CART
 export const getCart = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -12,6 +14,7 @@ export const getCart = async (req, res) => {
       });
     }
 
+    // Populate product details for each item
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     if (!cart) {
@@ -34,6 +37,7 @@ export const getCart = async (req, res) => {
   }
 };
 
+// ADD TO CART
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
@@ -53,6 +57,7 @@ export const addToCart = async (req, res) => {
       });
     }
 
+    // ✅ Fetch product to ensure it exists
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({
@@ -61,6 +66,7 @@ export const addToCart = async (req, res) => {
       });
     }
 
+    // ✅ Get or create user's cart
     let cart = await Cart.findOne({ user: userId });
 
     const itemData = {
@@ -77,13 +83,16 @@ export const addToCart = async (req, res) => {
         items: [itemData],
       });
     } else {
+      // Check if product already exists in cart
       const itemIndex = cart.items.findIndex(
         (item) => item.product.toString() === productId
       );
 
       if (itemIndex > -1) {
+        // Increment quantity
         cart.items[itemIndex].quantity += quantity;
       } else {
+        // Add new item
         cart.items.push(itemData);
       }
     }
