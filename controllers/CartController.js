@@ -1,8 +1,9 @@
 import Cart from "../models/cartModel.js";
-import Product from "../models/Product.js";
+import Product from "../models/product.js";
+
 export const getCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
@@ -25,12 +26,16 @@ export const getCart = async (req, res) => {
     });
   }
 };
+
 export const addToCart = async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
-    const userId = req.user.id;
+    const { productId, quantity = 1 } = req.body;
+    const userId = req.user._id;
 
-    // 1️⃣ Fetch product snapshot
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID required" });
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({
@@ -39,7 +44,6 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // 2️⃣ Get user's cart
     let cart = await Cart.findOne({ user: userId });
 
     const itemData = {
@@ -47,31 +51,26 @@ export const addToCart = async (req, res) => {
       name: product.name,
       image: product.image || "",
       price: product.price,
-      quantity: quantity,
-      // itemTotal will be calculated in pre-save hook
+      quantity,
     };
 
     if (!cart) {
-      // 3️⃣ Create cart if not exists
       cart = new Cart({
         user: userId,
         items: [itemData],
       });
     } else {
-      // 4️⃣ Check if product already in cart
       const itemIndex = cart.items.findIndex(
         (item) => item.product.toString() === productId
       );
 
       if (itemIndex > -1) {
         cart.items[itemIndex].quantity += quantity;
-        // other snapshot fields remain same
       } else {
         cart.items.push(itemData);
       }
     }
 
-    // 5️⃣ Save cart
     await cart.save();
 
     res.status(200).json({
