@@ -1,10 +1,16 @@
 import Cart from "../models/cartModel.js";
-import Product from "../models/Product.js";
-
+import Product from "../models/Product.js"; // ⚠️ case-sensitive
 
 export const getCart = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
 
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
@@ -31,10 +37,20 @@ export const getCart = async (req, res) => {
 export const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
-    const userId = req.user._id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
 
     if (!productId) {
-      return res.status(400).json({ message: "Product ID required" });
+      return res.status(400).json({
+        success: false,
+        message: "Product ID required",
+      });
     }
 
     const product = await Product.findById(productId);
