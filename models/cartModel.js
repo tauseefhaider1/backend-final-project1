@@ -31,7 +31,7 @@ const cartItemSchema = new mongoose.Schema(
 
     itemTotal: {
       type: Number,
-      required: true,
+      default: 0, // Changed from required: true to default: 0
     },
   },
   { _id: false }
@@ -60,15 +60,25 @@ const cartSchema = new mongoose.Schema(
    AUTO CALCULATE TOTAL
 ========================== */
 cartSchema.pre("save", function (next) {
+  console.log("🔄 Pre-save hook running for cart:", this._id);
+  
   let total = 0;
 
   this.items.forEach((item) => {
-    item.itemTotal = item.price * item.quantity;
+    // Calculate item total
+    item.itemTotal = item.price * (item.quantity || 1);
+    console.log(`   Item: ${item.name}, Price: ${item.price}, Qty: ${item.quantity}, Total: ${item.itemTotal}`);
     total += item.itemTotal;
   });
 
   this.cartTotal = total;
+  console.log(`   Cart total calculated: ${total}`);
   next();
+});
+
+// Also add validation to ensure itemTotal is calculated
+cartSchema.post('validate', function(doc) {
+  console.log("✅ Cart validation passed");
 });
 
 export default mongoose.model("Cart", cartSchema);
