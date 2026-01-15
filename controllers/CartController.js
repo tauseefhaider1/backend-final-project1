@@ -24,7 +24,12 @@ export const getCart = async (req, res) => {
       message: "Failed to fetch cart",
     });
   }
-};export const addToCart = async (req, res) => {
+};
+
+
+
+
+export const addToCart = async (req, res) => {
   console.log("🚀 ========== ADD TO CART STARTED ==========");
   console.log("📋 User ID:", req.user?.id);
   console.log("📋 Request body:", req.body);
