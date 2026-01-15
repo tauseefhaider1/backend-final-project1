@@ -1,3 +1,4 @@
+import mongoose from "mongoose"
 const cartItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,3 +19,6 @@ const cartItemSchema = new mongoose.Schema({
   price: { type: Number },    // ← no required
   image: { type: String, default: "" },
 }, { _id: false });
+const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
+
+export default Cart;
