@@ -97,7 +97,7 @@ console.log("Cookies:", req.cookies);
     };
     
     req.token = token;
-    req.userId = user;
+    req.userId = userId;
 
     next();
   } catch (error) {

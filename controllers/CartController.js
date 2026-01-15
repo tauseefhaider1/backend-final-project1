@@ -1,20 +1,9 @@
-// controllers/CartController.js
 import Cart from "../models/cartModel.js";
-import Product from "../models/Product.js"; // ✅ case-sensitive
-
-// GET CART
+import Product from "../models/Product.js";
 export const getCart = async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user.id;
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
-
-    // Populate product details for each item
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     if (!cart) {
@@ -36,44 +25,65 @@ export const getCart = async (req, res) => {
     });
   }
 };
-
-// ADD TO CART
-
-
-
-// CartController.js - Add these logs
- export const addToCart = async (req, res) => {
+export const addToCart = async (req, res) => {
   try {
-    console.log('=== ADD TO CART DEBUG ===');
-    console.log('Authorization Header:', req.headers.authorization);
-    console.log('Cookies:', req.headers.cookie);
-    console.log('Session:', req.session);
-    console.log('User object from middleware:', req.user);
-    console.log('User ID:', req.user?.id, req.user?._id);
-    console.log('Request body:', req.body);
-    
-    // Check multiple possible user ID locations
-    const userId = req.user?.id || req.user?._id || req.session?.userId;
-    
-    if (!userId) {
-      console.log('ERROR: No user ID found anywhere!');
-      console.log('Available properties on req.user:', Object.keys(req.user || {}));
-      return res.status(401).json({
+    const { productId, quantity } = req.body;
+    const userId = req.user.id;
+
+    // 1️⃣ Fetch product snapshot
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
         success: false,
-        message: "User not authenticated - no ID found",
+        message: "Product not found",
       });
     }
-    
-    console.log('Using userId:', userId);
-    
-    // ... rest of your code
+
+    // 2️⃣ Get user's cart
+    let cart = await Cart.findOne({ user: userId });
+
+    const itemData = {
+      product: product._id,
+      name: product.name,
+      image: product.image || "",
+      price: product.price,
+      quantity: quantity,
+      // itemTotal will be calculated in pre-save hook
+    };
+
+    if (!cart) {
+      // 3️⃣ Create cart if not exists
+      cart = new Cart({
+        user: userId,
+        items: [itemData],
+      });
+    } else {
+      // 4️⃣ Check if product already in cart
+      const itemIndex = cart.items.findIndex(
+        (item) => item.product.toString() === productId
+      );
+
+      if (itemIndex > -1) {
+        cart.items[itemIndex].quantity += quantity;
+        // other snapshot fields remain same
+      } else {
+        cart.items.push(itemData);
+      }
+    }
+
+    // 5️⃣ Save cart
+    await cart.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Item added to cart",
+      cart,
+    });
   } catch (error) {
     console.error("Add to cart error:", error);
-    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to add item to cart",
-      error: error.message // Include for debugging
     });
   }
-}
+};
