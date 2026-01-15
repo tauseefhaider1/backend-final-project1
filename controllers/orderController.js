@@ -1,74 +1,69 @@
 import Cart from "../models/cartModel.js";
 import Order from "../models/orderModel.js";
+import Product from "../models/Product.js";
+
+// 🛠️ NEW: Get full image URL
+const getFullImageUrl = (imagePath) => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith('http')) return imagePath;
+  return `https://backend-final-project1-production.up.railway.app${imagePath}`;
+};
+
 export const createOrder = async (req, res) => {
-  console.log("========== CREATE ORDER STARTED ==========");
-  console.log("User ID:", req.user?.id);
-  console.log("Request body:", req.body);
+  console.log("========== CREATE ORDER ==========");
   
   try {
     const userId = req.user.id;
     const { shippingAddress, paymentMethod = "cod" } = req.body;
 
-    console.log("Looking for cart for user:", userId);
+    // 1. Get and validate cart
     const cart = await Cart.findOne({ user: userId })
-      .populate("items.product");
-
-    console.log("Cart found:", cart ? "Yes" : "No");
-    console.log("Cart items:", cart?.items?.length);
+      .populate({
+        path: "items.product",
+        select: "name price image",
+        match: { _id: { $ne: null } } // ✅ Filter null products
+      });
 
     if (!cart || cart.items.length === 0) {
-      console.log("Cart is empty or not found");
       return res.status(400).json({ 
         success: false,
         message: "Cart is empty" 
       });
     }
 
-    // Validate cart items
-    console.log("Validating cart items...");
-    const invalidItems = cart.items.filter(item => !item.product);
-    if (invalidItems.length > 0) {
-      console.log("Found invalid items:", invalidItems);
+    // ✅ Filter out null products
+    const validCartItems = cart.items.filter(item => item.product !== null);
+    if (validCartItems.length === 0) {
       return res.status(400).json({
         success: false,
-        message: `Cart contains ${invalidItems.length} invalid products`
+        message: "Cart contains only invalid products"
       });
     }
 
-    // Validate shipping address
+    // 2. Validate shipping address
     if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.address || !shippingAddress.phone) {
-      console.log("Invalid shipping address:", shippingAddress);
       return res.status(400).json({
         success: false,
-        message: "Shipping address is required"
+        message: "Full name, address, and phone are required"
       });
     }
 
-    console.log("Preparing order items...");
-    // Prepare order items
-    const items = cart.items.map(item => {
-      console.log("Processing cart item:", item);
-      return {
-        product: item.product._id,
-        title: item.product.title || item.product.name,
-        image: item.product.image,
-        price: item.product.price,
-        quantity: item.quantity,
-      };
-    });
+    // 3. Prepare order items with CORRECT field names
+    const items = validCartItems.map(item => ({
+      product: item.product._id,
+      name: item.product.name, // ✅ Changed from "title" to "name"
+      image: getFullImageUrl(item.product.image), // ✅ Full URL
+      price: item.product.price,
+      quantity: item.quantity,
+    }));
 
-    console.log("Order items prepared:", items);
-
-    // Calculate total
+    // 4. Calculate total
     const totalAmount = items.reduce(
       (sum, item) => sum + (item.price * item.quantity),
       0
     );
 
-    console.log("Total amount calculated:", totalAmount);
-
-    // Create order
-    console.log("Creating order in database...");
+    // 5. Create order
     const order = await Order.create({
       user: userId,
       items,
@@ -79,65 +74,53 @@ export const createOrder = async (req, res) => {
         postalCode: shippingAddress.postalCode || "",
         phone: shippingAddress.phone,
       },
-      paymentMethod: paymentMethod,
+      paymentMethod: paymentMethod === "credit_card" ? "cod" : paymentMethod, // ✅ Map credit_card to cod
       paymentStatus: "pending",
       orderStatus: "pending",
       totalAmount,
     });
 
-    console.log("Order created successfully:", order._id);
-
-    // Clear cart
-    console.log("Clearing cart...");
+    // 6. Clear cart
     cart.items = [];
     await cart.save();
-    console.log("Cart cleared");
 
-    // Populate order for response
-    const populatedOrder = await Order.findById(order._id)
-      .populate("items.product");
-
-    console.log("========== ORDER CREATION SUCCESS ==========");
+    // 7. Return success
     res.status(201).json({
       success: true,
       message: "Order created successfully",
-      order: populatedOrder,
       orderId: order._id,
+      order: order
     });
 
   } catch (error) {
-    console.error("========== ORDER CREATION ERROR ==========");
-    console.error("Error name:", error.name);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
-    console.error("Full error:", error);
-    
-    // Check for specific MongoDB errors
-    if (error.name === 'ValidationError') {
-      console.error("Validation errors:", error.errors);
-    }
-    if (error.name === 'CastError') {
-      console.error("Cast error - invalid ID:", error.value);
-    }
-    
+    console.error("ORDER CREATION ERROR:", error);
     res.status(500).json({ 
       success: false,
-      message: error.message || "Failed to create order",
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message: error.message || "Failed to create order"
     });
   }
 };
+
 export const getMyOrders = async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ correct (from authMiddleware)
+    const userId = req.user.id;
 
     const orders = await Order.find({ user: userId })
-      .populate("items.product")
+      .populate("items.product", "name price image")
       .sort({ createdAt: -1 });
+
+    // ✅ Convert image URLs to full URLs
+    const ordersWithFullUrls = orders.map(order => ({
+      ...order.toObject(),
+      items: order.items.map(item => ({
+        ...item,
+        image: getFullImageUrl(item.image || item.product?.image)
+      }))
+    }));
 
     res.status(200).json({
       success: true,
-      orders,
+      orders: ordersWithFullUrls,
     });
   } catch (error) {
     console.error("GET MY ORDERS ERROR:", error);
@@ -146,7 +129,9 @@ export const getMyOrders = async (req, res) => {
       message: "Failed to fetch orders",
     });
   }
-};export const getAllOrders = async (req, res) => {
+};
+
+export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
       .populate("user", "name email")
@@ -164,7 +149,6 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-// Get single order by ID
 export const getOrderById = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -181,7 +165,6 @@ export const getOrderById = async (req, res) => {
       });
     }
 
-    // Check if user owns this order (unless admin)
     if (order.user._id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,

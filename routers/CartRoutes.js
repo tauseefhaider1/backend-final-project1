@@ -5,7 +5,8 @@ import {
   getCart, 
   updateCartItem, 
   removeFromCart, 
-  clearCart 
+  clearCart,
+  cleanupCart  // ✅ Added cleanup endpoint
 } from "../controllers/CartController.js";
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.get("/", authMiddleware, getCart);
 router.put("/update/:productId", authMiddleware, updateCartItem);
 router.delete("/remove/:productId", authMiddleware, removeFromCart);
 router.delete("/clear", authMiddleware, clearCart);
+router.post("/cleanup", authMiddleware, cleanupCart); // ✅ New cleanup route
 
 export default router;
