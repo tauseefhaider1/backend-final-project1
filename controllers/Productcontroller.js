@@ -130,11 +130,13 @@ export const getSingleProduct = async (req, res) => {
 /* ==========================
    UPDATE PRODUCT
 ========================== */
+/* ==========================
+   UPDATE PRODUCT
+========================== */
 export const updateProduct = async (req, res) => {
   try {
     const updatedData = {};
 
-    // ✅ Only update provided fields
     Object.keys(req.body).forEach((key) => {
       if (req.body[key] !== undefined) {
         updatedData[key] = req.body[key];
@@ -151,14 +153,21 @@ export const updateProduct = async (req, res) => {
     updatedData.topRated =
       req.body.topRated === "true" || req.body.topRated === true;
 
-    // ✅ Image replacement
+    // ✅ IMAGE REPLACEMENT (FIXED)
     if (req.file) {
       updatedData.image = `/uploads/products/${req.file.filename}`;
 
       const oldProduct = await Product.findById(req.params.id);
+
       if (oldProduct?.image) {
-        const oldPath = path.join(process.cwd(), oldProduct.image);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        const oldPath = path.join(
+          process.cwd(),
+          oldProduct.image.replace(/^\/+/, "")
+        );
+
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
       }
     }
 
@@ -189,6 +198,8 @@ export const updateProduct = async (req, res) => {
 
 /* ==========================
    DELETE PRODUCT
+========================== *//* ==========================
+   DELETE PRODUCT
 ========================== */
 export const deleteProduct = async (req, res) => {
   try {
@@ -201,9 +212,16 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
+    // ✅ IMAGE DELETE FIXED
     if (product.image) {
-      const imagePath = path.join(process.cwd(), product.image);
-      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+      const imagePath = path.join(
+        process.cwd(),
+        product.image.replace(/^\/+/, "")
+      );
+
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
     }
 
     await product.deleteOne();
