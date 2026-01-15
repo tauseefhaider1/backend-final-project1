@@ -38,7 +38,7 @@ const cartSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // 3. Auto-calculate totals before save
-cartSchema.pre("save", function (next) {
+cartSchema.pre("save", function () {
   let total = 0;
   this.items.forEach((item) => {
     const price = item.price || 0;           // safe fallback
@@ -46,7 +46,7 @@ cartSchema.pre("save", function (next) {
     total += item.itemTotal;
   });
   this.cartTotal = total;
-  next();
+
 });
 
 // 4. Export the model (idempotent – safe for hot-reload)
