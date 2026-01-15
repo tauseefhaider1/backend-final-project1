@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 const cartItemSchema = new mongoose.Schema(
   {
     product: {
@@ -26,43 +24,12 @@ const cartItemSchema = new mongoose.Schema(
     },
     itemTotal: {
       type: Number,
-      default: 0,
+      // ✅ REMOVE: required: true,
+      // ✅ ADD: default: function() { return this.price * this.quantity; }
+      default: function() {
+        return (this.price || 0) * (this.quantity || 1);
+      }
     },
   },
   { _id: false }
 );
-
-const cartSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      unique: true,
-    },
-    items: [cartItemSchema],
-    cartTotal: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { timestamps: true }
-);
-
-// Auto-calculate totals
-cartSchema.pre("save", function (next) {
-  let total = 0;
-
-  this.items.forEach((item) => {
-    item.itemTotal = item.price * item.quantity;
-    total += item.itemTotal;
-  });
-
-  this.cartTotal = total;
-  next();
-});
-
-// Check if model already exists before defining it
-const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
-
-export default Cart;
