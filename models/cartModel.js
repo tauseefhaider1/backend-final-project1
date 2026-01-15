@@ -7,31 +7,26 @@ const cartItemSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-
     name: {
-      type: String, // snapshot (product name at time of add)
+      type: String,
       required: true,
     },
-
     image: {
-      type: String, // snapshot
+      type: String,
       default: "",
     },
-
     price: {
-      type: Number, // snapshot price
+      type: Number,
       required: true,
     },
-
     quantity: {
       type: Number,
       default: 1,
       min: 1,
     },
-
     itemTotal: {
       type: Number,
-      default: 0, // Changed from required: true to default: 0
+      default: 0,
     },
   },
   { _id: false }
@@ -43,11 +38,9 @@ const cartSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true, // one cart per user
+      unique: true,
     },
-
     items: [cartItemSchema],
-
     cartTotal: {
       type: Number,
       default: 0,
@@ -56,29 +49,20 @@ const cartSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* ==========================
-   AUTO CALCULATE TOTAL
-========================== */
+// Auto-calculate totals
 cartSchema.pre("save", function (next) {
-  console.log("🔄 Pre-save hook running for cart:", this._id);
-  
   let total = 0;
 
   this.items.forEach((item) => {
-    // Calculate item total
-    item.itemTotal = item.price * (item.quantity || 1);
-    console.log(`   Item: ${item.name}, Price: ${item.price}, Qty: ${item.quantity}, Total: ${item.itemTotal}`);
+    item.itemTotal = item.price * item.quantity;
     total += item.itemTotal;
   });
 
   this.cartTotal = total;
-  console.log(`   Cart total calculated: ${total}`);
   next();
 });
 
-// Also add validation to ensure itemTotal is calculated
-cartSchema.post('validate', function(doc) {
-  console.log("✅ Cart validation passed");
-});
+// Check if model already exists before defining it
+const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
 
-export default mongoose.model("Cart", cartSchema);
+export default Cart;
