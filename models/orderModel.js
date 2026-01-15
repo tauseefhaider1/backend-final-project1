@@ -14,23 +14,55 @@ const orderSchema = new mongoose.Schema({
         ref: "Product",
         required: true,
       },
-      quantity: Number,
-      price: Number,
+      quantity: {
+        type: Number,
+        required: true,
+        min: 1
+      },
+      price: {
+        type: Number,
+        required: true
+      },
+      // ✅ ADD THESE FIELDS:
+      title: {
+        type: String,
+        required: true
+      },
+      image: {
+        type: String,
+        default: ""
+      }
     },
   ],
 
   shippingAddress: {
-    fullName: String,
-    address: String,
-    city: String,
-    postalCode: String,
-    phone: String,
+    fullName: {
+      type: String,
+      required: true
+    },
+    address: {
+      type: String,
+      required: true
+    },
+    city: {
+      type: String,
+      default: ""
+    },
+    postalCode: {
+      type: String,
+      default: ""
+    },
+    phone: {
+      type: String,
+      required: true
+    }
   },
 
   paymentMethod: {
     type: String,
     enum: ["cod", "stripe", "razorpay"],
     required: true,
+    default: "cod"
   },
 
   paymentStatus: {
@@ -39,7 +71,10 @@ const orderSchema = new mongoose.Schema({
     default: "pending",
   },
 
-  totalAmount: Number,
+  totalAmount: {
+    type: Number,
+    required: true
+  },
 
   orderStatus: {
     type: String,
