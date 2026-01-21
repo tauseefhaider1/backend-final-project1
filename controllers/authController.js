@@ -79,9 +79,10 @@ export const signup = async (req, res) => {
       otpRequired: true,
     });
   } catch (error) {
-    console.error("Signup error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
+  console.error("Signup error:", error.message, error);
+  return res.status(500).json({ message: error.message });
+}
+
 };
 
 /* ================= LOGIN ================= */

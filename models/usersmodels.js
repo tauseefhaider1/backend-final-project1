@@ -126,33 +126,34 @@ const userSchema = new mongoose.Schema(
 userSchema.virtual('isAccountLocked').get(function() {
   return this.accountLockedUntil && this.accountLockedUntil > new Date();
 });
-
-// Hash password before save
-userSchema.pre("save", async function() {
-  if (!this.isModified("password")) return ;
+userSchema.pre("save", async function(next) {
+  if (!this.isModified("password")) return next();
   
   try {
-    // Store old password in history (keep last 3)
-    if (this.password) {
-      if (!this.passwordHistory) {
-        this.passwordHistory = [];
-      }
-      
+    // Initialize password history
+    if (!this.passwordHistory) this.passwordHistory = [];
+    
+    // Hash password first
+    const hashed = await bcrypt.hash(this.password, 12);
+
+    // Add previous password to history if user already exists
+    if (this.isNew === false) {
       this.passwordHistory.unshift({
         password: this.password,
         changedAt: new Date()
       });
-      
-      // Keep only last 3 passwords
       if (this.passwordHistory.length > 3) {
         this.passwordHistory = this.passwordHistory.slice(0, 3);
       }
-      
       this.lastPasswordChange = new Date();
     }
-    
-    this.password = await bcrypt.hash(this.password, 12);
-  } catch (error) {
+
+    // Replace password with hash
+    this.password = hashed;
+    next();
+  } catch (err) {
+    console.error("Password hash/save error:", err);
+    next(err); // Pass error to Mongoose
   }
 });
 
