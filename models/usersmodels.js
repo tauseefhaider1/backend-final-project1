@@ -126,39 +126,32 @@ const userSchema = new mongoose.Schema(
 userSchema.virtual('isAccountLocked').get(function() {
   return this.accountLockedUntil && this.accountLockedUntil > new Date();
 });
-userSchema.pre("save", async function(next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function() {
+  if (!this.isModified("password")) return; // no next()
 
-  try {
-    // Initialize password history array if not exists
-    if (!this.passwordHistory) this.passwordHistory = [];
+  // Initialize password history
+  if (!this.passwordHistory) this.passwordHistory = [];
 
-    // Hash the password first
-    const hashed = await bcrypt.hash(this.password, 12);
+  // Hash password
+  const hashed = await bcrypt.hash(this.password, 12);
 
-    // If this is NOT a new user, add previous hashed password to history
-    if (!this.isNew) {
-      this.passwordHistory.unshift({
-        password: hashed, // ✅ store the hashed password, not plain text
-        changedAt: new Date()
-      });
+  // Add previous password to history for existing users
+  if (!this.isNew) {
+    this.passwordHistory.unshift({
+      password: hashed,
+      changedAt: new Date(),
+    });
 
-      // Keep only last 3 passwords
-      if (this.passwordHistory.length > 3) {
-        this.passwordHistory = this.passwordHistory.slice(0, 3);
-      }
-
-      this.lastPasswordChange = new Date();
+    if (this.passwordHistory.length > 3) {
+      this.passwordHistory = this.passwordHistory.slice(0, 3);
     }
 
-    // Replace password with hashed value
-    this.password = hashed;
-    next();
-  } catch (err) {
-    console.error("Password hash/save error:", err);
-    next(err); // Pass error to Mongoose
+    this.lastPasswordChange = new Date();
   }
+
+  this.password = hashed;
 });
+
 
 
 // Method to check if password was used before
