@@ -128,27 +128,30 @@ userSchema.virtual('isAccountLocked').get(function() {
 });
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();
-  
+
   try {
-    // Initialize password history
+    // Initialize password history array if not exists
     if (!this.passwordHistory) this.passwordHistory = [];
-    
-    // Hash password first
+
+    // Hash the password first
     const hashed = await bcrypt.hash(this.password, 12);
 
-    // Add previous password to history if user already exists
-    if (this.isNew === false) {
+    // If this is NOT a new user, add previous hashed password to history
+    if (!this.isNew) {
       this.passwordHistory.unshift({
-        password: this.password,
+        password: hashed, // ✅ store the hashed password, not plain text
         changedAt: new Date()
       });
+
+      // Keep only last 3 passwords
       if (this.passwordHistory.length > 3) {
         this.passwordHistory = this.passwordHistory.slice(0, 3);
       }
+
       this.lastPasswordChange = new Date();
     }
 
-    // Replace password with hash
+    // Replace password with hashed value
     this.password = hashed;
     next();
   } catch (err) {
@@ -156,6 +159,7 @@ userSchema.pre("save", async function(next) {
     next(err); // Pass error to Mongoose
   }
 });
+
 
 // Method to check if password was used before
 userSchema.methods.wasPasswordUsed = async function(password) {
